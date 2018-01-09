@@ -70,6 +70,7 @@ void Graph::BFS(int s)
             {
                 visited[*i] = true;
                 queue.push_back(*i);
+		
             }
         }
     }
