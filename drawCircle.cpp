@@ -1,11 +1,13 @@
 #include <GL/glut.h>
 #include <iostream>
-
-using namespace std;
-#include<iostream>
-#include <list>
  
 using namespace std;
+ 
+struct node
+{
+	
+
+}; 
  
 // This class represents a directed graph using
 // adjacency list representation
