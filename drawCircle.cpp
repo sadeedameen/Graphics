@@ -9,6 +9,10 @@ using namespace std;
  
 // This class represents a directed graph using
 // adjacency list representation
+struct node{
+	int x;
+	int y;
+}
 class Graph
 {
     int V;    // No. of vertices
@@ -75,6 +79,7 @@ void Graph::BFS(int s)
         }
     }
 }
+
  Graph g(7);
 int count=0;
 void circlePlotPoints(int xCenter, int yCenter, int x, int y )
@@ -111,6 +116,22 @@ void drawCircle( int xCenter, int yCenter, int radius )
 		circlePlotPoints(xCenter, yCenter, x, y);
 	}
 }
+void drawLine( int xStart, int yStart, int xEnd, int yEnd )
+{
+	int a,b,c,d;
+	a=xStart;
+	b=xEnd;
+	c=yStart;
+	d=yEnd;
+	glColor3f(0.0, 0.0, 1.0);
+	glBegin(GL_POINTS);
+	while((a<=b)&&(c<=d))
+	{
+	
+		glVertex2i(a++, c++ );
+	}
+	glEnd();
+}
 
 
 void display()
@@ -126,8 +147,10 @@ void mouseClick( int button, int state, int x, int y )
 	{
 		if( state == GLUT_DOWN )
 		{
+			
 			drawCircle(x, 500-y, 20);
 			glutSwapBuffers();
+			drawLine(x+20,500-y, x+40,y+40);
 			count++;
 			if (count<7)
 			g.addEdge(0, count);
@@ -144,7 +167,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowPosition(50,50);
 	glutInitWindowSize(800, 500);
-	glutCreateWindow("OpenGL LAB");
+	glutCreateWindow("BFS");
 	
 
 	glMatrixMode(GL_PROJECTION);
