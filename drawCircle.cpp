@@ -1,6 +1,11 @@
 #include <GL/glut.h>
 #include <iostream>
 #include <list>
+#include <string.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <wchar.h>
+//#include <tchar.h>
 using namespace std;
  
 struct node{
@@ -27,8 +32,10 @@ void circlePlotPoints(int xCenter, int yCenter, int x, int y )
 
 void drawCircle( int xCenter, int yCenter, int radius )
 {
+	void Sprint(int,int,int);
 	int x = 0, y = radius, p = 1 - radius;
 	node xnode;
+	
 	circlePlotPoints( xCenter, yCenter, x, y );
 	while( x < y )
 	{
@@ -44,6 +51,7 @@ void drawCircle( int xCenter, int yCenter, int radius )
 		}
 		circlePlotPoints(xCenter, yCenter, x, y);
 	}
+	Sprint(xCenter,yCenter,count);
 	xnode.x=xCenter;
 	xnode.y=yCenter;
 	xnode.data=count++;
@@ -66,6 +74,17 @@ void drawCircle( int xCenter, int yCenter, int radius )
 	glEnd();
 }*/
 
+void Sprint( int x, int y, int num)
+{
+	int l,i;
+	char *st,stx[3];
+	stx[0]=48+num;
+	stx[2]='\0';
+	st=stx;
+	glRasterPos2i( x-7, y-7); 
+	glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, st[0]); 
+
+}
 
 void display()
 {
@@ -83,7 +102,7 @@ void mouseClick( int button, int state, int x, int y )
 			
 			drawCircle(x, 500-y, 20);
 			glutSwapBuffers();
-		//	drawLine(x+20,500-y, x+40,y+40);
+			//drawLine(x+20,500-y, x+40,y+40);
 		for (list<node>::iterator it=nodeList.begin(); it != nodeList.end(); ++it)
 			{
 				node xnode=*it;
@@ -102,15 +121,11 @@ int main(int argc, char **argv)
 	glutInitWindowPosition(50,50);
 	glutInitWindowSize(800, 500);
 	glutCreateWindow("BFS");
-	
-
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluOrtho2D(0, 800, 0, 500);
-	
 	glutDisplayFunc(display);
 	glutMouseFunc(mouseClick);
-	
 	glutMainLoop();
 	
 	return 0;
