@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include<stdio.h>
 //#include <tchar.h>
 using namespace std;
  
@@ -59,19 +60,32 @@ void drawCircle( int xCenter, int yCenter, int radius )
 }
 void drawLine( int xStart, int yStart, int xEnd, int yEnd )
 {
-	int a,b,c,d;
-	a=xStart;
-	b=xEnd;
-	c=yStart;
-	d=yEnd;
+	int x1,y1,x2,y2,dx,dy,step,i,xinc,yinc;
+	x1=xStart;
+	x2=xEnd;
+	y1=yStart;
+	y2=yEnd;
+	dx=abs(x1-x2);
+	dy=abs(y1-y2);
+	if(dx>dy){
+		step=dx;
+		}
+	else{
+		step=dy;
+		}
+	xinc=(float)dx/step;
+	yinc=dy/(float)step;
 	glColor3f(0.0, 0.0, 1.0);
 	glBegin(GL_POINTS);
-	while((a<=b)&&(c<=d))
+	printf("step=%d,xinc=%d,yinc=%d",dx,xinc,yinc);
+	for(i=0;i<=step;i++)
 	{
-	
-		glVertex2i(a++, c++ );
+		glVertex2i(x1,y1);
+		glVertex2i(xEnd, yEnd);
+		x1+=(int)xinc;
+		y1+=(int)yinc;
 	}
-	glEnd();
+glEnd();	
 }
 
 void Sprint( int x, int y, int num)

@@ -1,5 +1,4 @@
-/*
-DFS using OpenGL
+/* BFS using OpenGL
 Author:Sadeed Ameen PO
 Roll No:267
 SCTCE
@@ -11,32 +10,27 @@ SCTCE
 #include <unistd.h>
 #include <stdio.h>
 
-#define RADIUS 30
-#define EDGE_WIDTH 2
+#define RADIUS 22
+#define EDGE_WIDTH 7
 
 using namespace std;
-
-struct COLOR
-{
-	float red, green, blue;
-};
-
-const COLOR WHITE = {0.95, 0.95, 0.95};
-const COLOR BLACK = {0.0, 0.0, 0.0};
-const COLOR RED   = {0.8, 0.0, 0.0};
-const COLOR GREEN = {0.0, 1.0, 0.0};
-const COLOR BLUE  = {0.0, 0.0, 0.8};
-const COLOR GRAY  = {0.6, 0.6, 0.6};
 
 struct POINT
 {
 	int x, y;
 };
 
-struct LINE
+struct COLOR
 {
-	POINT beg, end;
+	float red, green, blue;
 };
+
+const COLOR WHITE = {1.0, 1.0, 1.0};
+const COLOR BLACK = {0.5, 0.5, 0.6};
+const COLOR RED   = {0.7, 0.1, 0.0};
+const COLOR GREEN = {0.0, 1.0, 0.0};
+const COLOR BLUE  = {0.0, 0.0, 0.9};
+const COLOR GRAY  = {0.6, 0.6, 0.6};
 
 struct NODE;
 struct EDGE;
@@ -45,17 +39,8 @@ struct ADJ_LIST
 {
 	NODE *node;
 	EDGE *edge;
+	int weight;
 	ADJ_LIST *down, *next, *last;
-};
-
-struct NODE
-{
-	int xCenter, yCenter;
-	int d, f;
-	COLOR color;
-	char id;
-	NODE *parent;
-	ADJ_LIST *adjListHeader;
 };
 
 struct EDGE
@@ -64,21 +49,40 @@ struct EDGE
 	NODE *node1, *node2;
 };
 
-EDGE edgeList[20];
+struct NODE
+{
+	int xCenter, yCenter, d, f;
+	COLOR color;
+	char id;
+	NODE *parent;
+	ADJ_LIST *adjListHeader;
+};
+
+
+//global variable definitions
 ADJ_LIST *adjListBeg = NULL, *adjListEnd = NULL;
-int edgeCount = 0;
+EDGE edgeList[50];
+int currTime = 0, edgeCount = 0;
 char currID = 'A';
-int currTime = 0;
+
 
 void display();
 
+//
+//color comparison functions
+//
+int operator==(float color_array[], COLOR color)
+{
+	if( color_array[0] == color.red && color_array[1] == color.green && color_array[2] == color.blue )
+				return 1;
+	return 0;
+}
+
 int operator!=(float color_array[], COLOR color)
 {
-	if( color_array[0] == color.red )
-		if( color_array[1] == color.green )
-			if( color_array[2] == color.blue )
+	if( color_array[0] == color.red && color_array[1] == color.green && color_array[2] == color.blue )
 				return 0;
-	return 1;
+	return 1;	
 }
 
 int operator==(COLOR c1, COLOR c2)
@@ -93,6 +97,55 @@ int operator!=(COLOR c1, COLOR c2)
 	if( c1.red == c2.red && c1.green == c2.green && c1.blue == c2.blue )
 		return 0;
 	return 1;
+}
+//
+//graphics specific functions
+//
+void floodFill( int x, int y, COLOR fillColor)
+{
+	float prev_color[3];
+	POINT curr, temp;
+	curr.x = x; curr.y = y;
+	queue<POINT> pixels;
+	//push the first point to queue
+	pixels.push(curr);
+	while( !pixels.empty() )
+	{
+		curr = pixels.front();
+		pixels.pop();
+		glReadPixels(curr.x , curr.y , 1 , 1 , GL_RGB , GL_FLOAT , prev_color);
+		glColor3f(fillColor.red, fillColor.green, fillColor.blue);
+		glBegin(GL_POINTS);
+		if( prev_color == WHITE )
+		{
+			glVertex2i(curr.x, curr.y);
+			temp.x = curr.x+1; temp.y = curr.y;
+			pixels.push(temp);
+			temp.x = curr.x; temp.y = curr.y+1;
+			pixels.push(temp);
+			temp.x = curr.x; temp.y = curr.y-1;
+			pixels.push(temp);
+			temp.x = curr.x-1; temp.y = curr.y;
+			pixels.push(temp);
+		}
+		glEnd();
+	}	
+}
+
+void colorFill( int x, int y, COLOR fillColor )
+{
+	cout << "Filling color at postion x=" << x << " y=" << y << endl;
+	floodFill(x, y, fillColor);
+}
+
+void drawLine( int x1, int y1, int x2, int y2, COLOR color, int width)
+{
+	glColor3f(color.red, color.green, color.blue);
+	glLineWidth(width);
+	glBegin(GL_LINES);
+		glVertex2i(x1, y1);
+		glVertex2i(x2, y2);
+	glEnd();
 }
 
 void circleFillColor(int xCenter, int yCenter, int x, int y, COLOR fillColor) 
@@ -113,19 +166,9 @@ void circleFillColor(int xCenter, int yCenter, int x, int y, COLOR fillColor)
 			glVertex2i(i, yDown);
 		}
 	glEnd();
-}	
-
-void drawLine( int x1, int y1, int x2, int y2, COLOR color, int width)
-{
-	glColor3f(color.red, color.green, color.blue);
-	glLineWidth(width);
-	glBegin(GL_LINES);
-		glVertex2i(x1, y1);
-		glVertex2i(x2, y2);
-	glEnd();
 }
 
-void circlePlotPoints(int xCenter, int yCenter, int x, int y )
+void circlePlotPoints(int xCenter, int yCenter, int x, int y) 
 {
 	glColor3f(0.0, 0.0, 0.0);
 	glBegin(GL_POINTS);
@@ -160,6 +203,7 @@ void drawCircle( int xCenter, int yCenter, int radius, COLOR fillColor )
 		circlePlotPoints(xCenter, yCenter, x, y);
 		circleFillColor(xCenter, yCenter, x, y, fillColor);
 	}
+	//colorFill(xCenter, yCenter, fillColor);
 }
 
 void drawCharacter(int x, int y, char ch, COLOR color)
@@ -177,9 +221,9 @@ void drawString(int x, int y, char *str, COLOR color)
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, *str);
 }
 
-//-----------------------------------------------------------------
-//GRAPH SPECIFIC FUNCTIONS
-//-----------------------------------------------------------------
+//
+//graph specific functions
+//
 void printAdjList()
 {
 	ADJ_LIST *header, *temp;
@@ -233,6 +277,7 @@ void addAdjListHeader(NODE *node)
 	newAdjHeader->next = NULL;
 	newAdjHeader->last = newAdjHeader;
 	node->adjListHeader = newAdjHeader;
+
 	if( adjListBeg == NULL )
 	{
 		adjListBeg = adjListEnd = newAdjHeader;
@@ -286,6 +331,7 @@ void addAdjListEdge(NODE *node1, NODE *node2, EDGE *edge)
 	newAdj->down = NULL;
 	newAdj->next = NULL;
 	newAdj->last = NULL;
+	newAdj->weight = 0;
 	newAdj->node = node2;
 	newAdj->edge = edge;
 	header = node1->adjListHeader;
@@ -296,6 +342,7 @@ void addAdjListEdge(NODE *node1, NODE *node2, EDGE *edge)
 	newAdj->down = NULL;
 	newAdj->next = NULL;
 	newAdj->last = NULL;
+	newAdj->weight = 0;
 	newAdj->node = node1;
 	newAdj->edge = edge;
 	header = node2->adjListHeader;
@@ -305,10 +352,7 @@ void addAdjListEdge(NODE *node1, NODE *node2, EDGE *edge)
 
 void drawEdge(NODE *node1, NODE *node2, COLOR color)
 {
-	drawLine(node1->xCenter, node1->yCenter, node2->xCenter, node2->yCenter, color, EDGE_WIDTH);
-	int x, y;
-	x = node1->xCenter + (node2->xCenter - node1->xCenter)/2;
-	y = node1->yCenter + (node2->yCenter - node1->yCenter)/2;
+	drawLine(node1->xCenter, node1->yCenter, node2->xCenter, node2->yCenter, color, EDGE_WIDTH);	
 }
 
 void createEdge(NODE *node1, NODE *node2)
@@ -336,66 +380,64 @@ void drawAllNodesEdges()
 	for(ADJ_LIST *header = adjListBeg; header != NULL; header = header->down)
 		drawNode(header->node);
 }
-		
-void dfsVisit(NODE *u)
-{
-	NODE *v; ADJ_LIST *adjList;
-	currTime = currTime + 1;
-	u->d = currTime;
-	changeNodeColor(u, GRAY); sleep(1);
-	for(adjList = u->adjListHeader->next; adjList != NULL; adjList = adjList->next)
-	{
-		v = adjList->node;
-		if( v->color == WHITE )
-		{
-			v->parent = u;
-			cout << " --> " << v->id;
-			changeEdgeColor(adjList->edge, GREEN); usleep(50000);
-			dfsVisit(v);
-		}
-	}
-	currTime = currTime + 1;
-	u->f = currTime;
-	changeNodeColor(u, GREEN); sleep(1);
-}
 
-void dfs()
+//BFS Algorithm
+void bfs()
 {
-	cout << "\nStarting DFS\n";
-	NODE *u;
+	cout << "\nStarting BFS\n";
+	NODE *start = adjListBeg->node, *u, *v;
+	ADJ_LIST *adjList;
+	cout << "Start Node : " << start->id << endl;
 	sleep(1);
 	
-	cout << "Initializing nodes..\n";
-	for( ADJ_LIST *header = adjListBeg; header != NULL; header = header->down )
+	cout << "Initializing Nodes...\n";
+	for( ADJ_LIST *header = adjListBeg; header != NULL; header = header->down)
 	{
 		u = header->node;
+		u->d = -1;
 		u->parent = NULL;
-		u->d = 0;
-		u->f = 0;
 		changeNodeColor(u, WHITE); sleep(1);
 	}
-	currTime = 0;
-	for( ADJ_LIST *header = adjListBeg; header != NULL; header = header->down )
+	changeNodeColor(start, GRAY); sleep(1);
+	start->d = 0;
+	queue<NODE *> nodeQueue;
+	nodeQueue.push(start);
+	
+	while( !nodeQueue.empty() )
 	{
-		u = header->node;
-		if( u->color == WHITE )
+		u = nodeQueue.front();
+		nodeQueue.pop();
+		changeNodeColor(u, RED); sleep(1);
+		for(adjList = u->adjListHeader->next; adjList != NULL; adjList = adjList->next)
 		{
-			cout << u->id;
-			dfsVisit(u);
+			v = adjList->node;
+			if( v->color == WHITE )
+			{
+				v->d = u->d+1;
+				v->parent = u;
+				changeEdgeColor(adjList->edge, GREEN); usleep(50000);
+				changeNodeColor(v, GRAY); sleep(1);
+				nodeQueue.push(v);
+			}
 		}
+		changeNodeColor(u, GREEN); sleep(1);
 	}
+	cout << "BFS finished..\n";
 }
 
+//
+//starting functions
+//
 void display()
 {
-	glClearColor(1.0, 1.0, 1.0, 0.0);
+	glClearColor(1.0, 1.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	drawAllNodesEdges();
 	glFlush();
 }
 
+
 NODE *node1 = NULL, *node2 = NULL;
-int edgeWeightFlag = 0;
 
 void selectNode(int x, int y)
 {
@@ -412,7 +454,7 @@ void selectNode(int x, int y)
 		{
 			if( node2 == node1 )
 				return;
-			cout << "End Node : " << node2->id << endl;			
+			cout << "End Node : " << node2->id << endl;
 			createEdge(node1, node2);
 			node1 = node2 = NULL;
 		}	
@@ -434,6 +476,7 @@ void mouseClick(int button, int state, int x, int y)
 		if( state == GLUT_DOWN)
 		{
 			selectNode(x, 500-y);
+
 			glFlush();
 		}
 	}
@@ -444,11 +487,10 @@ void keyboardPress(unsigned char key, int x, int y)
 	switch(key)
 	{
 		case 'a' : printAdjList(); break;
-		case 'd' : dfs(); break;
+		case 'b' : bfs(); break;
 		default : cout << "unknown key" << endl;
 	}
 }
-
 
 int main(int argc, char **argv)
 {
@@ -456,16 +498,15 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowPosition(50,50);
 	glutInitWindowSize(800, 500);
-	glutCreateWindow("OpenGL LAB");
-	
+	glutCreateWindow("BFS");
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluOrtho2D(0, 800, 0, 500);
-	glClearColor(1.0, 1.0, 1.0, 0.0);
+	glClearColor(2.0, 3.0, 6.0, 0.0);
 	glutDisplayFunc(display);
 	glutMouseFunc(mouseClick);
 	glutKeyboardFunc(keyboardPress);
 	glutMainLoop();
 	return 0;
 }	
-//............End Of pgm.............
+//.....End of pgm.......

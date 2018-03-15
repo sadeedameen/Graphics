@@ -1,3 +1,8 @@
+/* BFS using OpenGL
+Author:Sadeed Ameen PO
+Roll No:267
+SCTCE
+*/ 
 #include <GL/glut.h>
 #include <iostream>
 #include <queue>
@@ -59,6 +64,7 @@ ADJ_LIST *adjListBeg = NULL, *adjListEnd = NULL;
 EDGE edgeList[50];
 int currTime = 0, edgeCount = 0;
 char currID = 'A';
+
 
 void display();
 
@@ -163,7 +169,7 @@ void circleFillColor(int xCenter, int yCenter, int x, int y, COLOR fillColor)
 	glEnd();
 }
 
-void circlePlotPoints(int xCenter, int yCenter, int x, int y )
+void circlePlotPoints(int xCenter, int yCenter, int x, int y) 
 {
 	glColor3f(0.0, 0.0, 0.0);
 	glBegin(GL_POINTS);
@@ -272,6 +278,7 @@ void addAdjListHeader(NODE *node)
 	newAdjHeader->next = NULL;
 	newAdjHeader->last = newAdjHeader;
 	node->adjListHeader = newAdjHeader;
+
 	if( adjListBeg == NULL )
 	{
 		adjListBeg = adjListEnd = newAdjHeader;
@@ -470,6 +477,7 @@ void mouseClick(int button, int state, int x, int y)
 		if( state == GLUT_DOWN)
 		{
 			selectNode(x, 500-y);
+
 			glFlush();
 		}
 	}
@@ -503,3 +511,4 @@ int main(int argc, char **argv)
 	glutMainLoop();
 	return 0;
 }	
+//.....End of pgm.......
