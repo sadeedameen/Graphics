@@ -1,25 +1,31 @@
 /*
-	TITLE : KRUSKAL MST
-	AUTHOR: SADEED AMEEN PO
-	ROLL NO : 267
+	TITLE   : DIJKSTRA'S ALGORITHM
+  	AUTHOR  : SADEED AMEEN PO
+  	ROLL NO : 267
 
-	Input : No. of Nodes
+ 	Input : No. of nodes and the start node
 */
+
 #include<iostream>
 #include<stdio.h>
 #include<GL/glut.h>
 #include<math.h>
 #include<unistd.h>
 #include<GL/gl.h>
-#define NILL 999
 
 using namespace std;
 
-int nodei, nodej, nodesDrawn = 0, pointsDrawn = 0, radius = 20, mouseX, mouseY, mouseLX, mouseLY, row, col, edgeCount=0, weight, k = 0, slope = 2, nodeCount;
-int nodes[10], xc[100], yc[100],xLine[100], yLine[100], color[3], parent[10];
-int adjMatrix[10][10],adjMatrixCopy[10][10];
+int xc[100], yc[100],xLine[100], yLine[100], nodesDrawn = 0, pointsDrawn = 0, radius = 25, mouseX, mouseY, mouseLX, mouseLY, row, col, edgeCount=0, weight;
+int slope = 2, nodeCount, arr[10],flag = 0, arr1[10];
+int adjMatrix[10][10], startNode, queue[10], front = -1, rear = -1, color[3], parent[10], distanceNode[10], v1, v2, adjmat[10][10];
 bool wait = false;
 
+struct Color 
+{
+	GLfloat r;
+	GLfloat g;
+	GLfloat b;
+};
 
 int sign(int x)                                           //to determine the sign, used in bressenham's function
 {
@@ -29,7 +35,7 @@ int sign(int x)                                           //to determine the sig
 void setPixelLine(float x, float y, int col)                      //function to plot the points obtained from bressenham's algorithm
 { 	
 	glPointSize(1.5);
-	if(col == 0)
+	if(col == 0)	
 		glColor3f(1.0, 0.0, 0.0 );
 	else
 		glColor3f(0.0, 1.0, 0.0);
@@ -52,6 +58,13 @@ void circlePlotPoints( int x, int y )                      //Plots the circle po
 			glVertex2i((xc[i] + x), (-y + yc[i] ));
 		glEnd();
 	}
+}
+
+Color getPixelColor(GLint x, GLint y)                           //Function to read the color of the pixel(x, y)
+{
+	Color color;
+	glReadPixels(x, y, 1, 1, GL_RGB, GL_FLOAT, &color);
+	return color;                                           //return the color in rgb values
 }
 
 void midPointCircle()
@@ -84,28 +97,19 @@ void midPointCircle()
 	}
 }
 
-void displayDistance()
+void drawString(int x, int y, char *str)
 {
-	for (int i = 0; i < nodesDrawn; i++)
-	{
-		glRasterPos2i( xc[i], yc[i] );
-		glutBitmapCharacter( GLUT_BITMAP_TIMES_ROMAN_24, i );
-	}
-}
-
-void drawString(float x, float y, char *str)
-{
-	glPointSize(1.0);
 	glColor3f(0.0, 0.0, 0.0);
 	glRasterPos2i(x, y);
 	for( str; *str != '\0'; str++ )
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, *str);
 }
 
+
 void printAdjMatrix()
 {
 	adjMatrix[row][col] = weight;
-	adjMatrix[col][row] = weight;		            
+	adjMatrix[col][row] = weight;			            
 }
 
 void bressenham(int x2, int y2, int x3, int y3, int slope, int col)   //Bressenham's line drawing algorithm
@@ -159,7 +163,6 @@ void getWeight()
 	{
 		cout << "\nEnter the weight : ";
 		cin >> weight;	
-		edgeCount++;
 		wait = false;
 	}
 }
@@ -181,89 +184,31 @@ void drawCircleLine()
 	midPointCircle();
 }
 
-
-void adjCopyMatrix()
+int sort(int arr[10])
 {
-	for(int i = 0; i < nodeCount; i++)
-		for(int j = 0; j < nodeCount; j++)
-			adjMatrixCopy[i][j] = adjMatrix[i][j];
-}
-
-int findMin()
-{
-	int min = NILL;
+	int min, node;
+	min = 9999;
 	for(int i = 0; i < nodeCount; i++)
 	{
-		for(int j = 0; j < nodeCount; j++)
-		{
-			if(adjMatrixCopy[i][j] == 0)
-				continue;
-			else if(adjMatrixCopy[i][j] <= min)		
-			{
-				if(adjMatrixCopy[i][j] == min && i == nodej && j == nodei)
-					continue;
-				else
-				{
-					min = adjMatrix[i][j];
-					nodei = i;
-					nodej = j;
-				}
-			}
-		}
-	}
-	adjMatrixCopy[nodei][nodej] = 0;
-	adjMatrixCopy[nodej][nodei] = 0;
-	return min;
-}
-
-int findParent(int a)
-{
-	while(parent[a] != NILL)
-	{
-		a = parent[a];
-		if(parent[a] != a)
+		if(arr[i] == 0)
 			continue;
-		else
-			break;
+		else if(arr[i] < min )
+		{
+			min = arr[i];
+			node = i;                   //return the number of node with min weight
+		}		
 	}
-	return a;
+	return node;
 }
 
-int findDuplicates(int nodei, int nodej)
+void relax(int u, int v, int weight)
 {
-	int flag = 0;	
-	for(int i = 0; i < nodeCount; i++)
+	if(distanceNode[v] > (distanceNode[u] + weight))
 	{
-		if(nodes[i] == nodei)
-		{
-			flag = 1;
-			break;
-		}
+		distanceNode[v] = distanceNode[u] + weight;
+		parent[v] = u;
 	}
-	if(flag == 0)
-		nodes[k++] = nodei;
-	flag = 0;
-	for(int i = 0; i < nodeCount; i++)
-	{
-		if(nodes[i] == nodej)
-		{
-			flag = 1;
-			break;
-		}
-	}
-	if(flag == 0)
-		nodes[k++] = nodej;
-}
-
-void findCenter(int nodei, int nodej, int weight)
-{
-	float x, y;
-	char ch[5];
-	x = (xc[nodei] + xc[nodej])/(2.0);
-	y = (yc[nodei] + yc[nodej])/(2.0);
-	sprintf(ch, "%d", weight);
-	drawString(x+3, y+3, ch);
-}
+} 
 
 void drawEdge(int nodei, int nodej)
 {
@@ -277,40 +222,74 @@ void drawEdge(int nodei, int nodej)
 	bressenham(xc[nodei], yc[nodei], xc[nodej], yc[nodej], slope, 1);
 }
 
-void kruskal()
-{
-	int x = 0, u, v, minimumCost = 0, k = 0, weight[edgeCount];
-	adjCopyMatrix();
-	while(x < nodeCount - 1) 
-	{
-		int w = findMin();
-		u = nodei; v = nodej;
-		u = findParent(u);
-		v = findParent(v);		
-		if(u != v)
-		{
-			if(nodei != nodej)
-			{
-				parent[nodej] = nodei;
-				findDuplicates(nodei, nodej);
-			}
-			weight[k++] = w;
-			findCenter(nodei, nodej, w);
-			drawEdge(nodei, nodej);
-			minimumCost = minimumCost + w;
-			x++;
-		}
-		sleep(1.0);
-	}
-	cout << "\n";
-	for(int i = 0; i < nodeCount; i++)
-		cout << nodes[i] << " ";
-	cout << "\nThe Weights in order of edges traversed are : ";
-	for(int i = 0; i < nodeCount - 1; i++)
-		cout << weight[i] << " ";
-	cout << "\nMinimum cost : " << minimumCost;
-}			
 
+void dijkstra(int startNode)
+{	
+	int x = 0, k = 0, isolatedNodes[10], q = 1;
+	char ch[5];
+	if(rear == -1)	
+		rear = 0;
+	else
+		rear++;
+	queue[rear] = startNode; 
+	arr1[k++] = startNode; 
+	int  r = 0, c = 0;
+	for(int i = 0; i < nodeCount; i++)
+	{
+		for(int j = 0; j < nodeCount; j++)
+		{
+			if(adjMatrix[i][j] != 0)
+			{
+				r = 1;
+				break;
+			}
+			else
+				c++;	
+		}
+		if(c < nodeCount)
+			continue;
+		else
+		{
+			isolatedNodes[q++] = i;
+			break;
+		}
+	}
+	q = q - 1;					//insert the startNode to the queue
+	while(front <= rear)
+	{
+		front++;
+		if(front == nodeCount - q)
+			break;
+		int u = queue[front];
+		x++;
+		for(int v = 0; v < nodeCount; v++)
+		{
+			if( x >= nodeCount - q)                                    //if x = nodeCount, all nodes have been traversed
+				break;
+			if(adjMatrix[u][v] > 0 && color[v] == 0)
+			{
+				relax(u, v, adjMatrix[u][v]);
+				arr[v] = distanceNode[v];
+			}
+			sleep(0.5);
+		}
+		if( x >= nodeCount - q )
+			break;
+		int p = sort(arr);
+		arr[p] = 0;                                        //the node has been traversed
+		queue[++rear] = p;
+		arr1[k++] = p;
+		drawEdge(u, p);
+		color[p] = 2;
+		sprintf(ch, "%d", p);
+		drawString(xc[p]-3, yc[p]-35, ch);
+	}
+	for(int i = 0; i < nodeCount - q ; i++)
+		cout << arr1[i] << " ";
+}
+
+
+		
 void mouse(int button, int state, int x, int y)
 {
 	if(state == GLUT_DOWN && button == GLUT_LEFT_BUTTON)              //if a left-click occured
@@ -356,8 +335,7 @@ void mouse(int button, int state, int x, int y)
 		}
 		if(pointsDrawn % 2 == 0)
 		{
-			wait = true;
-			edgeCount++;                       //if wait = true, then the click has occured twice and user inputs the weight
+			wait = true;                       //if wait = true, then the click has occured twice and user inputs the weight
 			getWeight();
 		}
 	}
@@ -370,9 +348,9 @@ void keyboardPress(unsigned char key, int x, int y)
 	cout << "\nTraversal Order : \n";
 	switch(key)
 	{
-		case  'k' : kruskal();                //if 'k' character id pressed, krukal is called
+		case  'd' :  dijkstra(startNode);                //if 's' character id pressed, then dijikstra is called
 			break;
-		default : cout <<"Invalid Key !!!"<< endl;
+		default : cout << "\nInvalid Key!!!" << endl;
 	}
 }
  
@@ -383,39 +361,44 @@ void initAdjMatrix()                                   //initialize adjacency ma
 		for(int j = 0; j < 10; j++)
 		{
 			adjMatrix[i][j] = 0;
-			adjMatrixCopy[i][j] = 0;
 		}
-		nodes[i] = NILL;	
+		arr1[i] = 0;
 	}
 		
 }
 
-void initializeSingleSource()
+void initializeSingleSource(int startNode )
 {
 	for( int i=0; i < nodeCount; i++ )                         
 	{
-		parent[i] = NILL;                       //for all nodes, assign the parent as NULL,
+		parent[i] = 999;                       //for all nodes, assign the parent as NULL,
 		color[i] = 0;                           //color as white
+		distanceNode[i] = 9999;                 //and distance as maximum
 	}
+	sleep(0.1);
+	color[startNode] = 2;                          //assign the color of startNode as grey
+	distanceNode[startNode] = 0;                   //make its distance as 0
 }
 
 void init()
 {
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowPosition(50,50);
-	glutInitWindowSize(800, 500);
-	glutCreateWindow("MST - Kruskal");
-	glClearColor(0.000, 0.749, 1.000, 0);
-	glClear(GL_COLOR_BUFFER_BIT);	
-	gluOrtho2D(0, 800, 0, 500);
+	glutInitWindowSize(500, 500);
+	glutCreateWindow("Dijikstra's Algorithm");	
+	glClearColor(0.000, 0.749, 1.000, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+	gluOrtho2D(0, 500, 0, 500);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-	cout<<"Enter the number of nodes in the graph : \n";
-	cin>>nodeCount;
+	cout << "\nEnter the number of nodes : ";
+	cin >> nodeCount;
+	cout << "\nEnter the starting node : ";
+	cin >> startNode;
 	initAdjMatrix();
-	initializeSingleSource();
+	initializeSingleSource(startNode);
 	glutInit(&argc, argv);
 	init();
 	glutMouseFunc(mouse);

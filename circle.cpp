@@ -1,3 +1,8 @@
+/*
+Circle Drawing algorithm
+Sadeed Ameen PO
+ROll No:267
+*/
 #include <GL/glut.h>
 #include <iostream>
 #include <string.h>
@@ -69,7 +74,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowPosition(50,50);
 	glutInitWindowSize(800, 500);
-	glutCreateWindow("BFS");
+	glutCreateWindow("Midpoint Circle Generation");
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluOrtho2D(0, 800, 0, 500);
@@ -79,7 +84,7 @@ int main(int argc, char **argv)
 	
 	return 0;
 }
-
+//End Of program
 
 
 
